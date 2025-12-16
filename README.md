@@ -98,70 +98,57 @@ In this multiprocessing client/server application, using structured logging inst
 # Architecture
 
 ```text
-┌──────────────────────────────┐
-│          CLI / CI            │
-│        (main.py)             │
-│                              │
-│  - parse arguments           │
-│  - build output_path         │
-│  - start server process      │
-└──────────────┬───────────────┘
-               │
-               │ multiprocessing.Process
-               ▼
-┌──────────────────────────────┐
-│     Server Process           │
-│  (ArithmeticServer)          │
-│                              │
-│  TCP LISTEN SOCKET           │
-│  bind(host, port)            │
-│  listen()                    │
-│                              │
-│  accept()                    │
-│       │                      │
-│       ▼                      │
-│  TCP CONNECTION SOCKET       │◄───────────────┐
-│                              │                │
-│  - receive operations        │                │
-│  - orchestrate workers       │                │
-│  - write results to file     │                │
-│                              │                │
-└──────────────┬───────────────┘                │
-               │                                │
-               │ multiprocessing.Pipe           │
-               │                                │
-               ▼                                │
-┌──────────────────────────────┐                │
-│     Worker Process #1        │                │
-│                              │                │
-│  - compute ONE expression    │                │
-│  - send result via Pipe      │                │
-│  - terminate immediately     │                │
-└──────────────────────────────┘                │
-               │                                │
-               ▼                                │
-        (many workers in parallel)              │
-               │                                │
-               ▼                                |
-┌──────────────────────────────┐                │
-│     Worker Process #N        │                │
-│                              │                │
-│  - compute ONE expression    │                │
-│  - send result via Pipe      │                │
-│  - terminate immediately     │                │
-└──────────────────────────────┘                │
-                                                │
-┌──────────────────────────────┐                │
-│        Client Process        │────────────────┘
-│     (ArithmeticClient)       │
-│                              │
-│  TCP CLIENT SOCKET           │
-│  connect(host, port)         │
-│                              │
-│  - send operations file      │
-│  - receive results file      │
-│  - write output file         │
-└──────────────────────────────┘
+                           ┌──────────────────────────────┐
+                           │     Main parent process      │
+                           │          CLI / CI            │
+                           │         (main.py)            │
+                           │                              │
+                           │  - Parse arguments           │
+                           │  - Build output_path         │
+                           │  - Start server process      │
+                           │  - Run ArithmeticClient      │
+                           │    (connect, send file,      │
+                           │     receive results)         │
+                           │                              │
+                           │   TCP CLIENT SOCKET          │
+                           │   connect(host, port)        │
+                           └─────────────┬────────────────┘
+                                         │
+                                         │
+                                         ▼
+                           ┌──────────────────────────────┐
+                           │    Server parent process     │
+                           │      (ArithmeticServer)      │
+                           │                              │
+                           │  TCP LISTEN SOCKET           │
+                           │  - bind(host, port)          │
+                           │  - listen()                  │
+                           │  - accept()                  │
+                           │                              │
+                           │  - Receive operations        │
+                           │  - Orchestrate workers       │
+                           │  - Collect results via Pipes │
+                           │  - Write results to file     │
+                           │  - Send results to client    │
+                           │                              │
+                           │  TCP CONNECTION SOCKET       │
+                           └─────────────┬────────────────┘
+                                         │
+          ┌──────────────────────────────┴───────────────────────────────┐
+          │                    Multiprocessing Pipes                     │
+          │   (worker → server): results sent immediately as they are    │
+          │   computed, server terminates each worker once done          │
+          ▼                                                              ▼
+┌──────────────────────────────┐                            ┌──────────────────────────────┐
+│    Worker child process #1   │                            │    Worker child process #N   │
+│                              │                            │                              │
+│  - Compute ONE operation     │                            │  - Compute ONE operation     │
+│  - Send result via Pipe      │                            │  - Send result via Pipe      │
+│  - Terminate immediately     │                            │  - Terminate immediately     │
+└──────────────────────────────┘                            └──────────────────────────────┘
+          ▲                                                                ▲
+          │                                                                │
+          └─────────────── Workers are dynamically spawned per line ───────┘
 ```
 
 # Installation
