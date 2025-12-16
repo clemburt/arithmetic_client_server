@@ -1,0 +1,25 @@
+name: Compute Large Operations Files
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_large_operations:
+        description: "Set to true to compute large operations file"
+        required: true
+        default: true
+
+jobs:
+  compute-operations-large:
+    name: 📄 Compute large operations files (manual)
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/clemburt/arithmetic_client_server:latest
+
+    steps:
+      # Checkout the repository (to access input operations files)
+      - uses: actions/checkout@v3
+
+      - name: Compute large arithmetic operations files
+        # Run the CLI against the current large operations files
+        run: |
+          sekoia arithmetic_client_server/resources/operations.7z

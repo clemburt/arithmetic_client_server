@@ -1,0 +1,147 @@
+name: CI Pipeline
+
+on:
+  # Trigger the pipeline on push to any branch
+  push:
+    # Run on push to any branch
+    branches:
+      - '**'
+  # Trigger the pipeline on pull requests to any branch
+  pull_request:
+    # Run on PRs to any branch
+    branches:
+      - '**'
+  # Allow manual triggering of the pipeline
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: 🐋 Build and push Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repository
+      - uses: actions/checkout@v3
+
+      # Authenticate to GitHub Container Registry
+      - name: Log in to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build the Docker image (pull base image to ensure freshness)
+      - name: Build Docker image
+        run: docker build --pull -t ghcr.io/clemburt/arithmetic_client_server:latest .
+
+      # Push to GHCR
+      - name: Push Docker image
+        run: docker push ghcr.io/clemburt/arithmetic_client_server:latest
+
+  compute-operations:
+    name: 📄 Compute operations file (${{ matrix.file }})
+    runs-on: ubuntu-latest
+    # This job depends on the build job
+    needs: build
+    container:
+      image: ghcr.io/clemburt/arithmetic_client_server:latest
+
+    strategy:
+      # Do not cancel other matrix jobs if one fails
+      fail-fast: false
+      matrix:
+        # Run the same job in parallel for each input operations file
+        file:
+          - arithmetic_client_server/resources/operations_short.txt
+          - arithmetic_client_server/resources/operations_short_corrupted.txt
+          - arithmetic_client_server/resources/operations_short.7z
+
+    steps:
+      # Checkout the repository (to access input operations files)
+      - uses: actions/checkout@v3
+
+      - name: Compute arithmetic operations files
+        # Run the CLI against the current matrix file
+        # Each matrix entry is executed in its own isolated job
+        run: |
+          sekoia ${{ matrix.file }}
+
+  test:
+    name: 🧪 Run tests
+    runs-on: ubuntu-latest
+    # This job depends on the build job
+    needs: build
+    container:
+      image: ghcr.io/clemburt/arithmetic_client_server:latest
+
+    steps:
+      # Checkout the repository
+      - uses: actions/checkout@v3
+
+      - name: Run tests with PDM
+        run: |
+          pdm install -dG test
+          pdm test
+
+  doc:
+    name: 📚 Build and deploy Docs using Docker
+    runs-on: ubuntu-latest
+    needs: build  # This job depends on the build
+    if: |
+      github.ref == 'refs/heads/main' ||
+      (
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.base.ref == 'main' &&
+        contains(github.event.pull_request.labels.*.name, 'documentation')
+      )
+    container:
+      image: ghcr.io/clemburt/arithmetic_client_server:latest
+
+    steps:
+      # Checkout the repository
+      - uses: actions/checkout@v3
+
+      # Install git explicitly to support GitHub Pages deployment (required by peaceiris/actions-gh-pages)
+      - name: Install git
+        run: apk add --no-cache git
+
+      - name: Build documentation with PDM
+        run: |
+          pdm install -dG doc
+          pdm doc
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/build
+          publish_branch: gh-pages
+
+  lint:
+    name: 🩺 Lint source code
+    runs-on: ubuntu-latest
+    # This job depends on the build job
+    needs: build
+    container:
+      image: ghcr.io/clemburt/arithmetic_client_server:latest
+
+    steps:
+      # Checkout the repository
+      - uses: actions/checkout@v3
+
+      - name: Run linting with PDM
+        run: |
+          pdm install -dG lint
+          pdm lint
+
+  clean:
+    name: 🧹 Clean Docker images and containers
+    runs-on: ubuntu-latest
+    needs: [build, compute-operations, test, doc, lint]
+    # This ensures it runs even if previous jobs failed
+    if: always()
+    steps:
+      - name: Clean up unused Docker images and containers
+        run: |
+          echo "Cleaning up unused Docker images and containers"
+          docker system prune -af
