@@ -27,7 +27,7 @@ jobs:
 
       # Upload the results as an artifact
       - name: Upload result file as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           # Path to the generated result file
           path: src/arithmetic_client_server/resources/operations_7z_results.txt
