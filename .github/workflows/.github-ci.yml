@@ -13,6 +13,11 @@ on:
       - '**'
   # Allow manual triggering of the pipeline
   workflow_dispatch:
+    inputs:
+      run_large_operations:
+        description: "Manually run the heavy job on operations_short.7z (300k lines)"
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -60,11 +65,35 @@ jobs:
       # Checkout the repository (to access input operations files)
       - uses: actions/checkout@v3
 
-      - name: Compute arithmetic operations
+      - name: Compute arithmetic operations files
         # Run the CLI against the current matrix file
         # Each matrix entry is executed in its own isolated job
         run: |
           sekoia ${{ matrix.file }}
+
+  compute-operations-large:
+    name: 📄 Compute large operations file (manual)
+    runs-on: ubuntu-latest
+    # This job depends on the build job
+    needs: build
+    # Run this job ONLY when the workflow is manually triggered
+    # AND the explicit input flag 'run_large_operations' is set to true
+    # This prevents the long-running 300k lines job from executing by default
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      inputs.run_large_operations == true
+    container:
+      image: ghcr.io/clemburt/arithmetic_client_server:latest
+
+    steps:
+      # Checkout the repository (to access input operations files)
+      - uses: actions/checkout@v3
+
+      - name: Compute large arithmetic operations file
+        # Run the CLI against the current matrix file
+        # Each matrix entry is executed in its own isolated job
+        run: |
+          sekoia arithmetic_client_server/resources/operations.7z
 
   test:
     name: 🧪 Run tests
@@ -137,7 +166,7 @@ jobs:
   clean:
     name: 🧹 Clean Docker images and containers
     runs-on: ubuntu-latest
-    needs: [build, compute-operations, test, doc, lint]
+    needs: [build, compute-operations, compute-operations-large, test, doc, lint]
     # This ensures it runs even if previous jobs failed
     if: always()
     steps:
