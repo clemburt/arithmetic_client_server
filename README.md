@@ -16,7 +16,7 @@
 
 # Purpose
 
-**arithmetic_client_server** is a Python socket-based client/server application using multiprocessing and pipes to safely compute arithmetic operations from files
+**arithmetic_client_server** is a Python socket-based client/server application using multiprocessing and pipes to safely evaluate arithmetic operations from files
 
 This application complies with the following guidelines:
 
@@ -185,7 +185,7 @@ options:
   -h, --help  show this help message and exit
 ```
 
-Example:
+Examples:
 
 ```bash
 sekoia ./arithmetic_client_server/resources/operations.txt

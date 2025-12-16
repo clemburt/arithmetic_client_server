@@ -2,7 +2,7 @@
 name = "arithmetic_client_server"
 # Version will be dynamically determined at build time instead of hardcoded here
 dynamic = ["version"]
-description = "A Python socket-based client/server application using multiprocessing and pipes to safely compute arithmetic operations from files"
+description = "A Python socket-based client/server application using multiprocessing and pipes to safely evaluate arithmetic operations from files"
 authors = [
     {name = "Clement Burtscher", email = "clement.burtscher@laposte.net"},
 ]
