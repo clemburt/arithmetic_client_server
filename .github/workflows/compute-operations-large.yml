@@ -1,6 +1,7 @@
 name: Compute Large Operations Files
 
 on:
+  # Allow manual triggering of the pipeline
   workflow_dispatch:
     inputs:
       run_large_operations:
@@ -23,3 +24,12 @@ jobs:
         # Run the CLI against the current large operations files
         run: |
           sekoia src/arithmetic_client_server/resources/operations.7z
+
+      # Upload the results as an artifact
+      - name: Upload result file as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          # Path to the generated result file
+          path: src/arithmetic_client_server/resources/operations_7z_results.txt
+          # Optional: name of the artifact in the Actions UI
+          name: operations_7z_results
