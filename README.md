@@ -188,7 +188,7 @@ options:
 Examples:
 
 ```bash
-sekoia ./arithmetic_client_server/resources/operations.txt
+sekoia src/arithmetic_client_server/resources/operations.txt
 ```
 
 # Tests

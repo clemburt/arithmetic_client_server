@@ -52,9 +52,9 @@ jobs:
       matrix:
         # Run the same job in parallel for each input operations file
         file:
-          - arithmetic_client_server/resources/operations_short.txt
-          - arithmetic_client_server/resources/operations_short_corrupted.txt
-          - arithmetic_client_server/resources/operations_short.7z
+          - src/arithmetic_client_server/resources/operations_short.txt
+          - src/arithmetic_client_server/resources/operations_short_corrupted.txt
+          - src/arithmetic_client_server/resources/operations_short.7z
 
     steps:
       # Checkout the repository (to access input operations files)
