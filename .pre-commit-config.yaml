@@ -1,0 +1,24 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.2.0
+    hooks:
+      # Remove trailing whitespace
+      - id: trailing-whitespace
+      # Ensure files end with a newline
+      - id: end-of-file-fixer
+      # Validate JSON files
+      - id: check-json
+      # Validate YAML files
+      - id: check-yaml
+      # Prevent accidental commits of very large files
+      - id: check-added-large-files
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.7
+    hooks:
+      - id: ruff
+        # Automatically fix linting issues where possible
+        args: [--fix]
+        name: ruff-lint-and-fix
+      - id: ruff-format
+        name: ruff-code-formatter

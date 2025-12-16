@@ -1,0 +1,120 @@
+[project]
+name = "arithmetic_client_server"
+# Version will be dynamically determined at build time instead of hardcoded here
+dynamic = ["version"]
+description = "A Python socket-based client/server application using multiprocessing and pipes to safely compute arithmetic operations from files"
+authors = [
+    {name = "Clement Burtscher", email = "clement.burtscher@laposte.net"},
+]
+dependencies = ["pydantic-settings>=2.10.1", "pydantic>=2.11.7", "py7zr>=1.0.0"]
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "MIT"}
+
+# CLI entry point using typer with subcommands
+[project.scripts]
+sekoia = "arithmetic_client_server.main:main"
+
+[build-system]
+requires = ["pdm-backend", "setuptools"]
+build-backend = "pdm.backend"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+    "pre-commit>=4.2.0",
+]
+test = [
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+]
+doc = [
+    "sphinx>=8.2.3",
+    "sphinx-autodoc-typehints>=3.2.0",
+    "sphinx-rtd-theme>=3.0.2",
+    "myst-parser>=4.0.1",
+    "sphinx-copybutton>=0.5.2",
+]
+lint = [
+    "pylint>=3.3.7",
+]
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "DEBUG"
+
+[tool.ruff]
+# Set the maximum allowed line length to 120 characters (default is 88)
+line-length = 120
+# Ignore these folders
+exclude = [".venv", "migrations", "__pycache__"]
+# Target Python version
+target-version = "py312"
+
+[tool.ruff.lint]
+# Only enable specific linting rule categories
+select = [
+    "E4",   # pycodestyle: Import formatting issues (e.g., extra blank lines, incorrect import order)
+    "E7",   # pycodestyle: Indentation and syntax issues (e.g., incorrect indentation levels)
+    "E9",   # pycodestyle: Runtime errors (e.g., NameError, SyntaxError, indentation errors)
+    "F",    # Pyflakes: Detects undefined or unused names, imports, and variables
+    "I",    # isort: Import sorting and formatting
+    "B",    # flake8-bugbear: Common bugs and best practices (e.g., mutable default args, unsafe iteration)
+    "UP",   # pyupgrade: Modern Python syntax suggestions (e.g., replacing `typing.List` with `list`)
+    "C90",  # mccabe: Checks code complexity (cyclomatic complexity)
+    "D"     # pydocstyle: Enforces docstring conventions and completeness
+]
+# Allow Ruff to automatically fix all fixable issues
+fixable = ["ALL"]
+# Ignore incompatible pydocstyle rules to avoid conflicting docstring formatting errors
+ignore = [
+  "D203",  # incompatible with D211, ignore incorrect-blank-line-before-class
+  "D212",  # incompatible with D213, ignore multi-line-summary-second-line
+]
+
+[tool.ruff.lint.per-file-ignores]
+# In __init__.py, ignore:
+# E402: Module level import not at top of file
+# F401: Imported but unused
+"__init__.py" = ["E402", "F401"]
+
+[tool.ruff.lint.isort]
+# Insert 2 blank lines after the last import (instead of the default one)
+lines-after-imports = 2
+# Force alphabetical order within each import section
+force-sort-within-sections = true
+# Treat project source code as a first-party (local) to regroup its imports
+known-first-party = ["arithmetic_client_server"]
+
+[tool.ruff.format]
+# Use double quotes "" for strings
+quote-style = "double"
+# Automatically format code blocks inside docstrings (like examples in triple-quoted strings)
+docstring-code-format = true
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.version]
+source = "scm"
+fallback_version = "0.1.0.dev"
+
+[tool.pdm.scripts]
+# Test script: runs sync with test deps and full pytest with coverage
+test.composite = [
+  "{pdm} sync -dG test",
+  "pytest --cov=src --verbose --junit-xml=test.xml --cov-report=xml:coverage.xml --cov-report=term {args:tests} -o log_cli=true -o log_cli_level=DEBUG -vvv"
+]
+# Command to copy README.md and CHANGELOG.md to docs/source
+copy-changelog = "cp CHANGELOG.md docs/source/"
+copy-readme = "cp README.md docs/source/"
+# This generates .rst files from your Python modules using Sphinx autodoc
+generate-docs = "sphinx-apidoc -o docs/source src"
+# This builds HTML documentation from the source files
+build-docs = "sphinx-build -b html docs/source docs/build"
+# Composite command that runs both generation and build
+doc = { composite = ["copy-changelog", "copy-readme", "generate-docs", "build-docs"] }
+# Linting command to run pylint on the codebase with scoring enabled
+# Returns 0 (non-error) status code to prevent CI job fail
+lint = "pylint --score=y --output-format=text --exit-zero src"
