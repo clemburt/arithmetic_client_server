@@ -28,7 +28,7 @@ The supported input file formats are: .txt, .zip, .tar.xz, .7z
 
 Here is an example of an input file:
 
-```txt
+```text
 38 - 83 - 52 + 30 - 24 - 89 / 66 + 18 / 7 * 77
 57 + 87 - 24 * 27 / 8 + 53 - 87 * 6 * 60 - 30
 63 * 23 - 91 - 17 * 45 + 63 * 52 - 50
@@ -42,7 +42,7 @@ Here is an example of an input file:
 
 Here is an example of the resulting output file:
 
-```txt
+```text
 38 - 83 - 52 + 30 - 24 - 89 / 66 + 18 / 7 * 77 = 105.65151515151518
 57 + 87 - 24 * 27 / 8 + 53 - 87 * 6 * 60 - 30 = -31234.0
 63 * 23 - 91 - 17 * 45 + 63 * 52 - 50 = 3819.0
@@ -97,6 +97,7 @@ In this multiprocessing client/server application, using structured logging inst
 
 # Architecture
 
+```text
 ┌──────────────────────────────┐
 │          CLI / CI            │
 │        (main.py)             │
@@ -161,6 +162,7 @@ In this multiprocessing client/server application, using structured logging inst
 │  - receive results file      │
 │  - write output file         │
 └──────────────────────────────┘
+```
 
 # Installation
 Make sure you have [PDM](https://pdm.fming.dev/) installed
