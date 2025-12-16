@@ -22,4 +22,4 @@ jobs:
       - name: Compute large arithmetic operations files
         # Run the CLI against the current large operations files
         run: |
-          sekoia arithmetic_client_server/resources/operations.7z
+          sekoia src/arithmetic_client_server/resources/operations.7z
